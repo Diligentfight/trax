@@ -227,15 +227,16 @@ def random_inputs(
 
 @gin.configurable()
 def sequence_copy_inputs(
-    vocab_size=gin.REQUIRED, batch_size=gin.REQUIRED,
-    train_lengths=gin.REQUIRED, eval_lengths=gin.REQUIRED, reverse=False):
+    vocab_size=gin.REQUIRED, batch_size=gin.REQUIRED, train_length=gin.REQUIRED,
+    eval_min_length=gin.REQUIRED, eval_max_length=gin.REQUIRED, reverse=False):
   """Inputs for the sequence copy problem: 0w0w for w in [1..vocab_size-1]*.
 
   Args:
     vocab_size: how many symbols to use.
     batch_size: how large are the batches.
-    train_lengths: lengths of w for training.
-    eval_lengths: lengths of w for eval.
+    train_length: maximum length of w for training.
+    eval_min_length: minimum length of w for eval.
+    eval_max_length : maximum length of w for eval.
     reverse: bool (optional, false by default): reverse the second sequence.
 
   Returns:
@@ -258,6 +259,8 @@ def sequence_copy_inputs(
         x = onp.concatenate([zero, w, zero, w], axis=1)
       yield (x, x, loss_weights)  # Here inputs and targets are the same.
 
+  train_lengths = [2*(i+2) for i in range(train_length - 1)]
+  eval_lengths = [2*(i+1) for i in range(eval_min_length, eval_max_length)]
   return Inputs(
       train_stream=lambda _: random_minibatches(train_lengths),
       eval_stream=lambda _: random_minibatches(eval_lengths)
